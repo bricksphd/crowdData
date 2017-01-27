@@ -14,7 +14,7 @@
         let spawner = spec[i].spawn;
         let location = spec[i].location;
         
-          for(let time = spawner.start; time < spawner.end; time+=rate){
+          for(let time = spawner.start; time < spawner.stop; time+=rate){
             agents.add({"location" : location, "destination": {"x": 0, "y" : 0}, "startTime" : time});
           }
       }

@@ -4,7 +4,10 @@
   <title>Custom Github Pages</title>
   <script>
     function convert(){
-      
+      let startingString = document.getElementById("startingJSON").value;
+      let spec = JSON.parse(startingString);
+      let result = JSON.stringify(spec);
+      document.getElementById("createdJSON").value = result;
     }
   </script>
 </head>

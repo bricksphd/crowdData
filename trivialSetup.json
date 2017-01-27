@@ -1,0 +1,21 @@
+[
+  {
+    "name": "door0",
+    "location": {
+      "y": "0",
+      "x": "0"
+    },
+    "spawn" : {
+      "start" : "0",
+      "stop" : "30",
+      "rate" : "5"
+    }
+  },
+   {
+    "name": "door1",
+    "location": {
+      "y": "0",
+      "x": "20"
+    }
+  }
+]

@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.min.js" integrity="sha256-3SrLjPeRPa1ofM280r+OMcUjJZKLWJHr6SRtRu3dRb0=" crossorigin="anonymous"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" integrity="sha256-obZACiHd7gkOk9iIL/pimWMTJ4W/pBsKu+oZnSeBIek=" crossorigin="anonymous"></script>
+
+</head>
+
+<body ng-app="angularSeed" ng-controller="myCtrl">
+<div class="container">
+    <div ng-repeat="name in names">
+        {{name}}
+    </div>
+    <canvas id="canv" width="400" height="400" ></canvas>
+
+    <input type="range" ng-model="rangeValue" min="0" max="{{maxFrame-1}}">
+    {{rangeValue}} -
+    {{maxFrame}}
+    <div>{{uniqueTimes[rangeValue].gameTime}}</div>
+
+
+</div>
+<!-- /.container -->
+
+<script>
+
+
+
+
+    var app = angular.module("angularSeed", []);
+    app.controller("myCtrl", function($scope, $http) {
+
+        $scope.self = this;
+        $scope.rangeValue = 0;
+
+        var cameraX = 0;
+        var cameraY = 0;
+        var cameraScale = 1;
+        var cameraScaleFactor = 1.1;
+
+
+
+        var lastX = 0;
+        var lastY = 0;
+
+        document.addEventListener("mousewheel", MouseWheelHandler, false);
+        // Firefox
+        document.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
+
+        function MouseWheelHandler(e) {
+            if((e.wheelDelta || -e.detail) > 0)
+                cameraScale *= cameraScaleFactor;
+            else
+                cameraScale /= cameraScaleFactor;
+
+            $scope.updateCanvas();
+
+
+        }
+
+        document.onkeyup = function(e){
+            if(e.key == "PageUp")
+                cameraScale *= cameraScaleFactor;
+            if(e.key == "PageDown")
+                cameraScale /= cameraScaleFactor;
+
+            $scope.updateCanvas();
+        };
+
+        document.getElementById('canv').onmousedown = function(e){
+
+            lastX = e.pageX;
+            lastY = e.pageY;
+
+            document.onmousemove = function(e){
+                updateCamera(e.pageX - lastX, e.pageY - lastY);
+                lastX = e.pageX;
+                lastY = e.pageY;
+            };
+            this.onmouseup = function(){
+                document.onmousemove = null;
+            }
+        };
+
+
+        function updateCamera(deltaX, deltaY)
+        {
+            cameraX += deltaX;
+            cameraY += deltaY;
+
+            $scope.updateCanvas();
+        }
+
+
+
+
+
+        $http.get("https://raw.githubusercontent.com/bricksphd/crowdData/master/runs/log_636214077313061444.runlog")
+                .then(function(response) {
+                    $scope.data = response.data;
+
+                    $scope.uniqueTimes = _.uniq($scope.data, 'gameTime');
+
+                    $scope.maxFrame = $scope.uniqueTimes.length;
+
+                    $scope.updateCanvas();
+                });
+
+        $scope.updateCanvas = function(){
+
+            if(!$scope.data) return;
+
+            var c = document.getElementById("canv");
+            var ctx = c.getContext("2d");
+
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            ctx.clearRect(0, 0, c.width, c.height);
+
+            ctx.fillStyle = "#AAAAAA";
+
+            ctx.fillRect(0, 0, c.width, c.height);
+
+            let lines = _.filter($scope.data, function(line){
+                return line.gameTime == $scope.uniqueTimes[$scope.rangeValue].gameTime;
+            });
+
+            ctx.translate(cameraX, cameraY);
+            ctx.scale(cameraScale,cameraScale);
+
+            ctx.fillStyle = "#000000";
+
+
+            for(let i= 0; i < lines.length; i++) {
+                let line = lines[i];
+
+                ctx.beginPath();
+                let x = parseFloat(line.position.x);
+                let y = parseFloat(line.position.z);
+
+                ctx.arc(x, y, .5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        $scope.$watch('rangeValue', function(newValue, oldValue){
+            $scope.updateCanvas();
+        });
+    });
+</script>
+</body>
+
+</html>
